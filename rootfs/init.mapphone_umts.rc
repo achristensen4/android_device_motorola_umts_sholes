@@ -53,9 +53,9 @@ on init
     symlink /system/bin/sh.bin /system/sbin/mksh
 
 # enable usb adb mode
-#    write /dev/usb_device_mode msc_adb
-#    write /tmp/usbd_current_state usb_mode_charge_adb
-#    chmod 0666 /tmp/usbd_current_state
+write /dev/usb_device_mode msc_adb
+write /tmp/usbd_current_state usb_mode_charge_adb
+chmod 0666 /tmp/usbd_current_state
 
 # set KSM parameters
     write /sys/kernel/mm/ksm/sleep_millisecs 15000
@@ -268,7 +268,7 @@ mount rootfs rootfs / ro remount
 # Power Management Settings
     write /sys/devices/platform/ohci.0/usb2/2-3/power/level auto
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 250000
-#    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 550000
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 550000
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor interactive
     write /sys/devices/system/cpu/cpu0/cpufreq/ondemand/up_threshold 86
     write /sys/devices/system/cpu/cpu0/cpufreq/ondemand/sampling_rate 46875
@@ -446,18 +446,18 @@ service batt2d /system/bin/batt2d
     group mot_accy mot_pwric
     oneshot
 
-#service catcommands /system/bin/catcommands
-#    class pre-zygote_services
-#    group radio 
+service catcommands /system/bin/catcommands
+class pre-zygote_services
+group radio 
 
-#service bplogd_daemon /system/bin/bplogd_daemon
-#    class pre-zygote_services
-#    socket dlog_cmds stream 660 radio log
-#    socket bp_pd_status stream 660 radio log
-#    socket bp_aol_cmd stream 666 radio log
-#    user radio
-#    group radio inet log sdcard_rw
-#    oneshot
+service bplogd_daemon /system/bin/bplogd_daemon
+class pre-zygote_services
+socket dlog_cmds stream 660 radio log
+socket bp_pd_status stream 660 radio log
+socket bp_aol_cmd stream 666 radio log
+user radio
+group radio inet log sdcard_rw
+oneshot
 
 service clean_dex /system/bin/sh /system/bin/clean_dex.sh
     class pre-zygote_services
@@ -470,12 +470,12 @@ service ssmgrd /system/xbin/ssmgrd
     group radio input mot_pwric
     oneshot
 
-#service tcmd /system/bin/tcmd
-#    class post-zygote_services
-#    group mot_tcmd radio mot_pwric input system log camera graphics mot_accy sdcard_rw audio inet bluetooth wifi
-#    socket local_tcmd stream 0660 mot_tcmd mot_tcmd
-#    socket batch_socket stream 0600 mot_tcmd mot_tcmd
-#    oneshot
+service tcmd /system/bin/tcmd
+class post-zygote_services
+group mot_tcmd radio mot_pwric input system log camera graphics mot_accy sdcard_rw audio inet bluetooth wifi
+socket local_tcmd stream 0660 mot_tcmd mot_tcmd
+socket batch_socket stream 0600 mot_tcmd mot_tcmd
+oneshot
 
 # turn on wifi for tcmd step one
 on property:tcmd.load_wlan=1
@@ -522,17 +522,14 @@ service wlan_loader /system/bin/wlan_loader \
     -f /system/etc/wifi/fw_wlan1271.bin -i /system/etc/wifi/tiwlan.ini \
     -e /config/wifi/nvs_map.bin
     class post-zygote_services
-    disabled
     oneshot
 
 service wlan_ap_loader /system/bin/logwrapper /system/bin/tiap_loader -f /system/etc/wifi/fw_tiwlan_ap.bin -i /system/etc/wifi/tiwlan_ap.ini -e /pds/wifi/nvs_map.bin
     class post-zygote_services
-    disabled
     oneshot
 
 service hostapd /system/bin/logwrapper /system/bin/hostap -d /data/misc/wifi/hostapd.conf
     class post-zygote_services
-    disabled
     oneshot
 
 service wpa_supplicant /system/bin/wpa_supplicant \
@@ -540,20 +537,17 @@ service wpa_supplicant /system/bin/wpa_supplicant \
     class post-zygote_services
 #   we will start as root and wpa_supplicant will switch to user wifi
 #   after setting up the capabilities required for WEXT
-#   user wifi
-#   group wifi inet keystore
+    user wifi
+    group wifi inet keystore
     socket wpa_tiwlan0 dgram 660 wifi wifi
-    disabled
     oneshot
 
 service dhcpcd_tiwlan0 /system/bin/dhcpcd -ABKL
     class post-zygote_services
-    disabled
     oneshot
 
 service iprenew_tiwlan0 /system/bin/dhcpcd -n
     class post-zygote_services
-    disabled
     oneshot
 
 service hciattach /system/bin/hciattach \
@@ -561,7 +555,6 @@ service hciattach /system/bin/hciattach \
     class post-zygote_services
     user bluetooth
     group bluetooth net_bt_admin
-    disabled
 
 on property:hw.dspbridge.needs_recovery=1
     start baseimage
@@ -579,7 +572,6 @@ service pvrsrv /system/bin/pvrsrvinit
 service pppd /system/xbin/pppd silent ipparam dun plugin /system/lib/libpppd_plugin.so
     class post-zygote_services
     user root
-    disabled
     oneshot
 
 service locDrv /system/bin/brcm_guci_drv -config /system/etc/gpsconfig.xml
@@ -620,7 +612,6 @@ service compcache /system/bin/handle_compcache
 
 # bugreport is triggered by the KEY_LEFTSHIFT and KEY_DEL keycodes
 service bugreport /system/bin/dumpstate -d -v -o /sdcard/bugreports/bugreport
-    disabled
     user root
     oneshot
     keycodes 42 14
@@ -630,7 +621,6 @@ service bugreport /system/bin/dumpstate -d -v -o /sdcard/bugreports/bugreport
 # 2. provoke light sensor read > ALS event - workaround for ALS interrupt
 #    not happening on light condition change anymore after some (random?) uptime
 service proximity_als /system/bin/sh -c "sendevent /dev/input/event5 3 25 2147483647 && sendevent /dev/input/event5 0 0 0 && cat /sys/class/leds/lcd-backlight/als > /dev/null"
-    disabled
     user root
     oneshot
     keycodes 211 212
